@@ -2487,57 +2487,21 @@ const SYN = {
   },
 
   highlightPython(raw) {
-    const lines = raw.split('\n');
-    return lines.map(line => {
-      // Strip comment BEFORE escaping
-      let commentPart = '';
-      const hashIdx = line.indexOf('#');
-      if (hashIdx !== -1) {
-        const before = line.substring(0, hashIdx);
-        // Make sure # is not inside a string
-        const singleQ = (before.match(/'/g) || []).length;
-        const doubleQ = (before.match(/"/g) || []).length;
-        if (singleQ % 2 === 0 && doubleQ % 2 === 0) {
-          commentPart = '<span class="code-comment">' + SYN.escapeHTML(line.substring(hashIdx)) + '</span>';
-          line = line.substring(0, hashIdx);
-        }
-      }
+    const pythonRegex = /(#.*)|(&quot;(?:\\.|[^&]|\x26(?!quot;))*&quot;|'(?:[^'\\]|\\.)*')|(@[a-zA-Z_][a-zA-Z0-9_.]*)|(\b(?:def|class|import|from|return|assert|try|except|finally|with|as|pass|if|else|elif|in|not|and|or|for|while|lambda|global|nonlocal|raise|yield|async|await)\b)|(\b(?:str|int|dict|List|list|set|tuple|float|bool|None|TypedDict|Annotated|BaseModel|Field|FastMCP|ClientSession|StdioServerParameters|stdio_client|ChatPromptTemplate|StrOutputParser|JsonOutputParser|RunnablePassthrough|RunnableParallel|StateGraph|START|END|add_messages|ToolNode|create_react_agent|MemorySaver|SqliteSaver|PostgresSaver|Chroma|FAISS|BM25Retriever|EnsembleRetriever|RecursiveCharacterTextSplitter|TextLoader|PyPDFLoader|WebBaseLoader|CSVLoader|HumanMessage|AIMessage|SystemMessage|ToolMessage|BaseMessage|MessagesPlaceholder)\b)|(\b(?:True|False)\b)|(\b\d+\.?\d*\b)|(\b\w+)(?=\s*\()/g;
 
-      // Escape the code part
-      let code = SYN.escapeHTML(line);
+    let escaped = SYN.escapeHTML(raw);
 
-      // Strings (single and double quoted)
-      code = code.replace(/(&quot;)(.*?)(\1)/g, '<span class="code-str">$1$2$3</span>');
-      code = code.replace(/(&#x27;|')(.*?)(&#x27;|')/g, '<span class="code-str">$1$2$3</span>');
-
-      // Decorators
-      code = code.replace(/(@[a-zA-Z_][a-zA-Z0-9_.]*)/g, '<span class="code-decorator">$1</span>');
-
-      // Keywords
-      const kws = ['def','class','import','from','return','assert','try','except','finally','with','as','pass','if','else','elif','in','not','and','or','for','while','lambda','global','nonlocal','raise','yield','async','await'];
-      kws.forEach(k => {
-        code = code.replace(new RegExp('\\b' + k + '\\b', 'g'), '<span class="code-keyword">' + k + '</span>');
-      });
-
-      // Type/class names (common ones)
-      const types = ['str','int','dict','List','list','set','tuple','float','bool','None','TypedDict','Annotated','BaseModel','Field','FastMCP','ClientSession','StdioServerParameters','stdio_client','ChatPromptTemplate','StrOutputParser','JsonOutputParser','RunnablePassthrough','RunnableParallel','StateGraph','START','END','add_messages','ToolNode','create_react_agent','MemorySaver','SqliteSaver','PostgresSaver','Chroma','FAISS','BM25Retriever','EnsembleRetriever','RecursiveCharacterTextSplitter','TextLoader','PyPDFLoader','WebBaseLoader','CSVLoader','HumanMessage','AIMessage','SystemMessage','ToolMessage','BaseMessage','MessagesPlaceholder'];
-      types.forEach(t => {
-        code = code.replace(new RegExp('\\b' + t + '\\b', 'g'), '<span class="code-type">' + t + '</span>');
-      });
-
-      // Booleans
-      ['True','False'].forEach(b => {
-        code = code.replace(new RegExp('\\b' + b + '\\b', 'g'), '<span class="code-builtin">' + b + '</span>');
-      });
-
-      // Numbers
-      code = code.replace(/\b(\d+\.?\d*)\b/g, '<span class="code-num">$1</span>');
-
-      // Functions (word followed by open paren)
-      code = code.replace(/\b([a-zA-Z_][a-zA-Z0-9_]*)(?=\s*\()/g, '<span class="code-fn">$1</span>');
-
-      return code + commentPart;
-    }).join('\n');
+    return escaped.replace(pythonRegex, (match, g1, g2, g3, g4, g5, g6, g7, g8) => {
+      if (g1 !== undefined) return `<span class="code-comment">${g1}</span>`;
+      if (g2 !== undefined) return `<span class="code-str">${g2}</span>`;
+      if (g3 !== undefined) return `<span class="code-decorator">${g3}</span>`;
+      if (g4 !== undefined) return `<span class="code-keyword">${g4}</span>`;
+      if (g5 !== undefined) return `<span class="code-type">${g5}</span>`;
+      if (g6 !== undefined) return `<span class="code-builtin">${g6}</span>`;
+      if (g7 !== undefined) return `<span class="code-num">${g7}</span>`;
+      if (g8 !== undefined) return `<span class="code-fn">${g8}</span>`;
+      return match;
+    });
   },
 
   highlightBash(raw) {
@@ -2549,30 +2513,31 @@ const SYN = {
         commentPart = '<span class="code-comment">' + SYN.escapeHTML(line.substring(hashIdx)) + '</span>';
         line = line.substring(0, hashIdx);
       }
+      
       let code = SYN.escapeHTML(line);
-      // Commands
-      ['pip','python','python3','mkdir','cd','source','git','npm','node','export','echo'].forEach(c => {
-        code = code.replace(new RegExp('^(\\s*)(' + c + ')\\b'), '$1<span class="code-keyword">$2</span>');
+      const bashRegex = /(^|\s)(pip|python|python3|mkdir|cd|source|git|npm|node|export|echo)\b|(\s)(-{1,2}[a-zA-Z][a-zA-Z0-9_-]*)\b|(&quot;.*?&quot;|'.*?')/g;
+      
+      code = code.replace(bashRegex, (match, spaceBeforeCmd, cmd, spaceBeforeFlag, flag, str) => {
+        if (cmd !== undefined) return `${spaceBeforeCmd}<span class="code-keyword">${cmd}</span>`;
+        if (flag !== undefined) return `${spaceBeforeFlag}<span class="code-type">${flag}</span>`;
+        if (str !== undefined) return `<span class="code-str">${str}</span>`;
+        return match;
       });
-      // Flags
-      code = code.replace(/(\s)(-{1,2}[a-zA-Z][a-zA-Z0-9_-]*)/g, '$1<span class="code-type">$2</span>');
-      // Strings
-      code = code.replace(/(["'])(.*?)\1/g, '<span class="code-str">$1$2$1</span>');
+      
       return code + commentPart;
     }).join('\n');
   },
 
   highlightJSON(raw) {
     let code = SYN.escapeHTML(raw);
-    // Keys
-    code = code.replace(/(&quot;[^&]+&quot;)(\s*:)/g, '<span class="code-key">$1</span>$2');
-    // String values
-    code = code.replace(/:\s*(&quot;[^&]*&quot;)/g, ': <span class="code-str">$1</span>');
-    // Numbers
-    code = code.replace(/:\s*(\d+\.?\d*)/g, ': <span class="code-num">$1</span>');
-    // Booleans/null
-    code = code.replace(/\b(true|false|null)\b/g, '<span class="code-builtin">$1</span>');
-    return code;
+    const jsonRegex = /(&quot;[^&]+&quot;)(\s*:)|(:\s*)(&quot;[^&]*&quot;)|(:\s*)(\d+\.?\d*)|(true|false|null)/g;
+    return code.replace(jsonRegex, (match, key, keyColon, valColon, valStr, numColon, num, boolNull) => {
+      if (key !== undefined) return `<span class="code-key">${key}</span>${keyColon}`;
+      if (valStr !== undefined) return `${valColon}<span class="code-str">${valStr}</span>`;
+      if (num !== undefined) return `${numColon}<span class="code-num">${num}</span>`;
+      if (boolNull !== undefined) return `<span class="code-builtin">${boolNull}</span>`;
+      return match;
+    });
   },
 
   highlightEnv(raw) {
@@ -2596,13 +2561,13 @@ const SYN = {
 
   highlightTree(raw) {
     let code = SYN.escapeHTML(raw);
-    // Folder names (ending with /)
-    code = code.replace(/([a-zA-Z0-9_.-]+\/)/g, '<span class="code-type">$1</span>');
-    // File names with extensions
-    code = code.replace(/\b([a-zA-Z0-9_.-]+\.[a-zA-Z0-9]+)\b/g, '<span class="code-str">$1</span>');
-    // Comments
-    code = code.replace(/(#[^\n]*)/g, '<span class="code-comment">$1</span>');
-    return code;
+    const treeRegex = /(#[^\n]*)|([a-zA-Z0-9_.-]+\/)|(\b[a-zA-Z0-9_.-]+\.[a-zA-Z0-9]+\b)/g;
+    return code.replace(treeRegex, (match, comment, folder, file) => {
+      if (comment !== undefined) return `<span class="code-comment">${comment}</span>`;
+      if (folder !== undefined) return `<span class="code-type">${folder}</span>`;
+      if (file !== undefined) return `<span class="code-str">${file}</span>`;
+      return match;
+    });
   },
 
   highlightAll() {
