@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Gen AI Level 2 — Complete Study Guide v2 &amp; Mock Exam</title>
-<meta name="description" content="Comprehensive v2 study guide for LangChain, LangGraph, MCP, Prompt Engineering, Vector Databases and RAG. 200 MCQ mock exam, scenario questions, cheat sheets and interview prep.">
+<meta name="description" content="Comprehensive v2 study guide for LangChain, LangGraph, MCP, Prompt Engineering, Vector Databases and RAG. 132 MCQ mock exam, scenario questions, cheat sheets and interview prep.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
@@ -486,7 +486,7 @@ body.sidebar-collapsed .menu-toggle {
 <div class="nav-group">
   <div class="nav-group-title" role="button" aria-expanded="false" tabindex="0"><span class="topic-dot" style="background:var(--primary)"></span>Mock Exam</div>
   <div class="nav-items">
-    <a class="nav-item" href="#quiz">200 MCQ Questions</a>
+    <a class="nav-item" href="#quiz">132 MCQ Questions</a>
   </div>
 </div>
 </nav>
@@ -494,7 +494,7 @@ body.sidebar-collapsed .menu-toggle {
 <main class="main" id="mainContent">
 <div class="hero">
   <h1>Gen AI Level 2 — Complete Study Guide v2</h1>
-  <p>Comprehensive notes, code examples, 200 MCQ mock exam, 100+ scenario questions, cheat sheets &amp; interview prep. Based on Eden Marco's Udemy courses.</p>
+  <p>Comprehensive notes, code examples, 132 MCQ mock exam, 100+ scenario questions, cheat sheets &amp; interview prep. Based on Eden Marco's Udemy courses.</p>
   <div class="topic-pills">
     <span class="topic-pill" style="color:var(--peach);border-color:var(--peach)">LangChain</span>
     <span class="topic-pill" style="color:var(--sage);border-color:var(--sage)">LangGraph</span>
@@ -2633,12 +2633,12 @@ class MovieReview(BaseModel):
 <!-- ===================== MOCK EXAM ===================== -->
 <div class="section" id="quiz">
 <div class="section-header" onclick="this.parentElement.classList.toggle('open')" style="border-left-color:var(--primary)" aria-expanded="false">
-  <h2>📝 Mock Exam — 200 MCQ Questions</h2><span class="chevron" aria-hidden="true">▾</span>
+  <h2>📝 Mock Exam — 132 MCQ Questions</h2><span class="chevron" aria-hidden="true">▾</span>
 </div>
 <div class="section-body">
 <p>Situational and conceptual questions across all topics. Click an option to answer — the explanation reveals automatically. Answers are shuffled on load.</p>
 <div class="quiz-controls" role="toolbar" aria-label="Quiz filters">
-  <button class="quiz-btn active" onclick="filterQuiz('all',this)" id="qf-all">All (200)</button>
+  <button class="quiz-btn active" onclick="filterQuiz('all',this)" id="qf-all">All (132)</button>
   <button class="quiz-btn" onclick="filterQuiz('lc',this)" id="qf-lc">LangChain</button>
   <button class="quiz-btn" onclick="filterQuiz('lg',this)" id="qf-lg">LangGraph</button>
   <button class="quiz-btn" onclick="filterQuiz('mcp',this)" id="qf-mcp">MCP</button>
@@ -2646,7 +2646,7 @@ class MovieReview(BaseModel):
   <button class="quiz-btn" onclick="filterQuiz('vdb',this)" id="qf-vdb">Vector DB</button>
   <button class="quiz-btn" onclick="filterQuiz('rag',this)" id="qf-rag">RAG</button>
   <button class="quiz-btn" onclick="filterQuiz('cross',this)" id="qf-cross">Cross-Topic</button>
-  <span class="quiz-score" role="status" aria-live="polite">Score: 0/0 answered (200 remaining)</span>
+  <span class="quiz-score" role="status" aria-live="polite">Score: 0/0 answered (132 remaining)</span>
 </div>
 <div class="quiz-progress" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
   <div class="quiz-progress-bar" id="quizProgressBar"></div>
@@ -3110,6 +3110,24 @@ const QUIZ = {
     const diffMap = { lc: 'medium', lg: 'medium', mcp: 'medium', pe: 'easy', vdb: 'medium', rag: 'medium', cross: 'hard' };
     const diffLabel = { easy: 'Easy', medium: 'Medium', hard: 'Hard', scenario: 'Scenario' };
 
+    // Count categories dynamically
+    const counts = { all: window.quizData.length, lc: 0, lg: 0, mcp: 0, pe: 0, vdb: 0, rag: 0, cross: 0 };
+    window.quizData.forEach(q => {
+      if (counts[q.t] !== undefined) counts[q.t]++;
+    });
+    const setBtnText = (id, label, count) => {
+      const el = document.getElementById(id);
+      if (el) el.textContent = `${label} (${count})`;
+    };
+    setBtnText('qf-all', 'All', counts.all);
+    setBtnText('qf-lc', 'LangChain', counts.lc);
+    setBtnText('qf-lg', 'LangGraph', counts.lg);
+    setBtnText('qf-mcp', 'MCP', counts.mcp);
+    setBtnText('qf-pe', 'Prompt Eng', counts.pe);
+    setBtnText('qf-vdb', 'Vector DB', counts.vdb);
+    setBtnText('qf-rag', 'RAG', counts.rag);
+    setBtnText('qf-cross', 'Cross-Topic', counts.cross);
+
     // Shuffle options for each question
     QUIZ.shuffledData = window.quizData.map(q => QUIZ.shuffleOptions(q));
 
@@ -3161,7 +3179,7 @@ const QUIZ = {
   },
 
   updateUI() {
-    const total = window.quizData?.length || 200;
+    const total = window.quizData?.length || 132;
     const answered = QUIZ.answered.size;
     const scoreEl = document.querySelector('.quiz-score');
     const bar = document.getElementById('quizProgressBar');
@@ -3216,7 +3234,7 @@ window.addEventListener('load', () => {
 });
 
 // ================================================================
-// QUIZ DATA — 200 QUESTIONS (shuffled at render time)
+// QUIZ DATA — 132 QUESTIONS (shuffled at render time)
 // d: "easy"|"medium"|"hard"|"scenario" — difficulty tag
 // ================================================================
 window.quizData = [
