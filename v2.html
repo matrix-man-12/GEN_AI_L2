@@ -3134,6 +3134,12 @@ const QUIZ = {
     const frag = document.createDocumentFragment();
     QUIZ.shuffledData.forEach((q, i) => {
       const diff = q.d || diffMap[q.t] || 'medium';
+      
+      // Clean explanation of hardcoded correct option letters (e.g. "B is correct.")
+      const cleanedExplanation = q.e
+        .replace(/^<strong>[A-D]\s+is\s+correct\.?<\/strong>\s*/i, '')
+        .replace(/^[A-D]\s+is\s+correct\.?\s*/i, '');
+
       const card = document.createElement('div');
       card.className = 'question-card';
       card.id = 'q-' + i;
@@ -3152,7 +3158,7 @@ const QUIZ = {
             </button>
           `).join('')}
         </div>
-        <div class="question-explanation" role="alert" aria-live="polite">${q.e}</div>
+        <div class="question-explanation" role="alert" aria-live="polite"><strong>Explanation:</strong> ${cleanedExplanation}</div>
       `;
       frag.appendChild(card);
     });
