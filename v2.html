@@ -51,7 +51,7 @@ body { font-family:var(--font); background:var(--bg); color:var(--text); line-he
   transition: border-color .15s;
 }
 .search-box input:focus { border-color:var(--primary); box-shadow:0 0 0 3px rgba(212,149,106,0.15); }
-.search-box::before { content:'⌕'; position:absolute; left:24px; top:50%; transform:translateY(-50%); color:var(--text-light); font-size:15px; pointer-events:none; }
+.search-box::before { content:'⌕'; position:absolute; left:12px; top:50%; transform:translateY(-50%); color:var(--text-light); font-size:13px; pointer-events:none; }
 .search-shortcut { position:absolute; right:10px; top:50%; transform:translateY(-50%); font-size:10px; color:var(--text-light); background:var(--border-light); padding:1px 5px; border-radius:3px; pointer-events:none; }
 .search-results {
   position:absolute; top:calc(100% + 4px); left:0; right:0;
@@ -86,8 +86,10 @@ body { font-family:var(--font); background:var(--bg); color:var(--text); line-he
 .nav-item:focus { outline:2px solid var(--primary); outline-offset:-2px; }
 .topic-dot { display:inline-block; width:6px; height:6px; border-radius:50%; margin-right:6px; flex-shrink:0; }
 
-/* ===== MAIN CONTENT ===== */
-.main { margin-left:var(--sidebar-w); padding:32px 48px 80px; max-width:940px; }
+.main {
+  margin-left:var(--sidebar-w); padding:32px 48px 80px; max-width:1000px;
+  transition: margin-left .3s cubic-bezier(.4,0,.2,1), max-width .3s, margin-right .3s;
+}
 .hero { margin-bottom:40px; }
 .hero h1 { font-size:28px; font-weight:700; color:var(--text); letter-spacing:-.5px; }
 .hero p { color:var(--text-sec); margin-top:6px; font-size:14px; }
@@ -104,7 +106,7 @@ body { font-family:var(--font); background:var(--bg); color:var(--text); line-he
 }
 .section-header:hover { background:var(--surface-alt); }
 .section-header h2 { font-size:17px; font-weight:600; display:flex; align-items:center; gap:10px; }
-.section-header .chevron { font-size:18px; color:var(--text-light); transition:transform .25s; }
+.section-header .chevron { font-size:14px; color:var(--text-light); transition:transform .25s; }
 .section.open .section-header .chevron { transform:rotate(180deg); }
 .section-body { display:none; padding:0 20px 20px; }
 .section.open .section-body { display:block; }
@@ -236,23 +238,48 @@ tr:hover td { background:var(--surface-alt); }
 .question-explanation.visible { display:block; }
 .question-explanation strong { color:var(--success); }
 
-/* ===== MOBILE ===== */
+/* ===== SIDEBAR & TOGGLE COLLAPSE ===== */
 .menu-toggle {
-  display:none; position:fixed; top:12px; left:12px; z-index:200;
-  background:var(--surface); border:1px solid var(--border); border-radius:6px;
-  padding:8px 12px; font-size:18px; cursor:pointer;
-  box-shadow:var(--shadow-sm); min-height:44px; min-width:44px;
+  display: flex; align-items: center; justify-content: center;
+  position: fixed; top: 14px; left: calc(var(--sidebar-w) + 12px); z-index: 200;
+  background: var(--surface); border: 1px solid var(--border); border-radius: 6px;
+  padding: 6px 10px; font-size: 14px; cursor: pointer;
+  box-shadow: var(--shadow-sm); min-height: 34px; min-width: 34px;
+  transition: left .3s cubic-bezier(.4,0,.2,1);
 }
 .sidebar-overlay {
-  display:none; position:fixed; inset:0; background:rgba(0,0,0,0.4);
-  z-index:99; backdrop-filter:blur(2px);
+  display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4);
+  z-index: 99; backdrop-filter: blur(2px);
 }
-.sidebar-overlay.active { display:block; }
+.sidebar-overlay.active { display: block; }
+
+/* DESKTOP COLLAPSED STATE */
+body.sidebar-collapsed .sidebar {
+  transform: translateX(-100%);
+}
+body.sidebar-collapsed .main {
+  margin-left: auto;
+  margin-right: auto;
+  max-width: 1200px; /* Stretch content when space is available */
+  padding: 32px 64px 80px; /* Spacing around the main area */
+}
+body.sidebar-collapsed .menu-toggle {
+  left: 12px;
+}
+
+/* MOBILE AND RESPONSIVE STYLES */
 @media(max-width:768px){
-  .sidebar { transform:translateX(-100%); box-shadow:none; }
-  .sidebar.open { transform:translateX(0); box-shadow:var(--shadow-md); }
-  .main { margin-left:0; padding:20px 16px 80px; }
-  .menu-toggle { display:flex; align-items:center; justify-content:center; }
+  .sidebar { transform: translateX(-100%); box-shadow: none; }
+  .main { margin-left: 0; padding: 20px 16px 80px; }
+  .menu-toggle { left: 12px; }
+  
+  body.sidebar-open-mobile .sidebar {
+    transform: translateX(0);
+    box-shadow: var(--shadow-md);
+  }
+  body.sidebar-open-mobile .menu-toggle {
+    left: calc(var(--sidebar-w) + 12px);
+  }
 }
 
 /* ===== CONNECTION MAP ===== */
@@ -2658,19 +2685,36 @@ const SYN = {
 // ================================================================
 const NAV = {
   init() {
-    // Mobile sidebar toggle
+    // Sidebar toggle (desktop and mobile)
     const toggle = document.getElementById('menuToggle');
     const sidebar = document.getElementById('sidebar');
     const overlay = document.getElementById('sidebarOverlay');
 
+    // Load initial preference on desktop
+    if (window.innerWidth > 768) {
+      const savedCollapsed = localStorage.getItem('sidebarCollapsed');
+      if (savedCollapsed === 'true') {
+        document.body.classList.add('sidebar-collapsed');
+        toggle?.setAttribute('aria-expanded', 'false');
+      } else {
+        toggle?.setAttribute('aria-expanded', 'true');
+      }
+    }
+
     toggle?.addEventListener('click', () => {
-      const isOpen = sidebar.classList.toggle('open');
-      overlay.classList.toggle('active', isOpen);
-      toggle.setAttribute('aria-expanded', isOpen);
+      if (window.innerWidth > 768) {
+        const isCollapsed = document.body.classList.toggle('sidebar-collapsed');
+        toggle.setAttribute('aria-expanded', !isCollapsed);
+        localStorage.setItem('sidebarCollapsed', isCollapsed ? 'true' : 'false');
+      } else {
+        const isOpen = document.body.classList.toggle('sidebar-open-mobile');
+        overlay.classList.toggle('active', isOpen);
+        toggle.setAttribute('aria-expanded', isOpen);
+      }
     });
 
     overlay?.addEventListener('click', () => {
-      sidebar.classList.remove('open');
+      document.body.classList.remove('sidebar-open-mobile');
       overlay.classList.remove('active');
       toggle?.setAttribute('aria-expanded', 'false');
     });
@@ -2698,7 +2742,7 @@ const NAV = {
         const id = navItem.getAttribute('href').substring(1);
         // Close sidebar on mobile
         if (window.innerWidth <= 768) {
-          sidebar.classList.remove('open');
+          document.body.classList.remove('sidebar-open-mobile');
           overlay.classList.remove('active');
           toggle?.setAttribute('aria-expanded', 'false');
         }
