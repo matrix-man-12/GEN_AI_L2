@@ -2862,11 +2862,6 @@ const SCROLLSPY = {
           const link = document.querySelector(`.nav-item[href="#${id}"]`);
           if (link) {
             link.classList.add('active');
-            // Ensure parent nav-group is open
-            const navGroup = link.closest('.nav-group');
-            if (navGroup && !navGroup.classList.contains('open')) {
-              navGroup.classList.add('open');
-            }
           }
         }
       });
