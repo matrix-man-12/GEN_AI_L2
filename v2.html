@@ -456,6 +456,15 @@ body.sidebar-collapsed .menu-toggle {
   </div>
 </div>
 <div class="nav-group">
+  <div class="nav-group-title" role="button" aria-expanded="false" tabindex="0"><span class="topic-dot" style="background:#FF5A5F"></span>LangSmith</div>
+  <div class="nav-items">
+    <a class="nav-item" href="#langsmith-what">What &amp; Why</a>
+    <a class="nav-item" href="#langsmith-setup">Setup &amp; Tracing</a>
+    <a class="nav-item" href="#langsmith-tracing">Tracing Custom Code</a>
+    <a class="nav-item" href="#langsmith-datasets">Datasets &amp; Eval</a>
+  </div>
+</div>
+<div class="nav-group">
   <div class="nav-group-title" role="button" aria-expanded="false" tabindex="0"><span class="topic-dot" style="background:var(--teal)"></span>Important Imports</div>
   <div class="nav-items">
     <a class="nav-item" href="#imports">All Key Imports</a>
@@ -489,6 +498,7 @@ body.sidebar-collapsed .menu-toggle {
   <div class="topic-pills">
     <span class="topic-pill" style="color:var(--peach);border-color:var(--peach)">LangChain</span>
     <span class="topic-pill" style="color:var(--sage);border-color:var(--sage)">LangGraph</span>
+    <span class="topic-pill" style="color:#FF5A5F;border-color:#FF5A5F">LangSmith</span>
     <span class="topic-pill" style="color:var(--rose);border-color:var(--rose)">MCP</span>
     <span class="topic-pill" style="color:var(--sand);border-color:var(--sand)">Prompt Engineering</span>
     <span class="topic-pill" style="color:var(--olive);border-color:var(--olive)">Vector Databases</span>
@@ -1816,6 +1826,106 @@ parent_graph.add_edge("sub_workflow", END)</pre></div>
 </ul>
 </div>
 </div></div>
+
+<!-- ===================== LANGSMITH ===================== -->
+<div class="section" id="langsmith">
+<div class="section-header" onclick="this.parentElement.classList.toggle('open')" style="border-left-color:#FF5A5F" aria-expanded="false">
+  <h2><span class="topic-dot" style="background:#FF5A5F"></span>LangSmith — Observability &amp; Evaluation</h2><span class="chevron" aria-hidden="true">▾</span>
+</div>
+<div class="section-body">
+
+<div class="subsection" id="langsmith-what">
+  <h3>What &amp; Why</h3>
+  <p>LangSmith is a developer platform for building, debugging, testing, and monitoring LLM applications. While frameworks like LangChain help you build pipelines, LangSmith gives you the eyes to see exactly what happens inside those pipelines in production.</p>
+  <div class="table-wrapper">
+    <table>
+      <tr><th>Capability</th><th>Why You Need It</th><th>Production Value</th></tr>
+      <tr><td><strong>Debugging</strong></td><td>See full prompt inputs, exact completions, latency, and costs per step.</td><td>Trace back exactly why an LLM returned a bad response.</td></tr>
+      <tr><td><strong>Testing &amp; Eval</strong></td><td>Run datasets through your chains and score them automatically.</td><td>Ensures code changes or prompt edits don't regress performance.</td></tr>
+      <tr><td><strong>Monitoring</strong></td><td>Track latency, token usage, cost, feedback scores, and error rates.</td><td>High-level dashboard of application performance over time.</td></tr>
+      <tr><td><strong>Feedback Loops</strong></td><td>Capture user thumbs-up/down ratings and save them alongside traces.</td><td>Build datasets from production failures to continuously improve prompts/models.</td></tr>
+    </table>
+  </div>
+</div>
+
+<div class="subsection" id="langsmith-setup">
+  <h3>Setup &amp; Tracing</h3>
+  <p>Tracing is automatic when correct environment variables are set. Zero code changes are required in your LangChain/LangGraph application.</p>
+  <div class="code-wrapper"><div class="code-header"><div class="code-header-left"><span class="lang-badge">env</span>.env</div><button class="copy-btn" aria-label="Copy code">Copy</button></div>
+<pre data-lang="env"># Enable tracing in the current environment
+LANGCHAIN_TRACING_V2=true
+
+# Your LangSmith API key
+LANGCHAIN_API_KEY=lsv2_pt_abc123...
+
+# Define the project name in your LangSmith dashboard
+LANGCHAIN_PROJECT=production-chatbot</pre></div>
+  <button class="code-explain-toggle" aria-expanded="false">↳ Show explanation</button>
+  <div class="code-explanation">Setting <code>LANGCHAIN_TRACING_V2=true</code> tells the underlying LangChain client callbacks to intercept calls and upload them to the LangSmith API endpoint. The <code>LANGCHAIN_PROJECT</code> variable organizes these traces into separate workspaces. Never publish your <code>LANGCHAIN_API_KEY</code>.</div>
+</div>
+
+<div class="subsection" id="langsmith-tracing">
+  <h3>Tracing Custom Code</h3>
+  <p>To trace non-LangChain code or attach custom metadata/tags to your traces, use the <code>@traceable</code> decorator and run configurations.</p>
+  <div class="code-wrapper"><div class="code-header"><div class="code-header-left"><span class="lang-badge">python</span>Python — custom tracing &amp; tags</div><button class="copy-btn" aria-label="Copy code">Copy</button></div>
+<pre data-lang="python">from langsmith import traceable
+from langchain_core.runnables import RunnableConfig
+
+# Decorate any standard Python function to trace it
+@traceable(run_type="tool", name="calculate_amortization")
+def my_custom_logic(amount: float, rate: float) -> float:
+    return amount * (rate / 12)
+
+# Pass tags, metadata, and thread IDs inside RunnableConfig
+config: RunnableConfig = {
+    "tags": ["env:production", "user-tier:premium"],
+    "metadata": {
+        "user_id": "usr_9982",
+        "session_id": "sess_88192"
+    }
+}
+# result = chain.invoke({"input": "query"}, config=config)</pre></div>
+  <button class="code-explain-toggle" aria-expanded="false">↳ Show explanation</button>
+  <div class="code-explanation">The <code>@traceable</code> decorator lets you trace plain Python functions as nested spans inside the main execution tree. Using <code>RunnableConfig</code> to pass <code>tags</code> and <code>metadata</code> allows filtering, grouping, and cost allocation analysis inside the LangSmith dashboard.</div>
+</div>
+
+<div class="subsection" id="langsmith-datasets">
+  <h3>Datasets &amp; Eval</h3>
+  <p>Instead of manually testing prompts, you can curate <strong>datasets</strong> in LangSmith and evaluate chains programmatically using LLM-as-a-judge or exact match heuristics.</p>
+  <div class="code-wrapper"><div class="code-header"><div class="code-header-left"><span class="lang-badge">python</span>Python — programmatic evaluation</div><button class="copy-btn" aria-label="Copy code">Copy</button></div>
+<pre data-lang="python">from langsmith import Client
+from langsmith.evaluation import evaluate
+
+client = Client()
+
+# Define the target function to evaluate
+def predict(inputs: dict) -> dict:
+    return {"output": "Extracted answer"}
+
+# Evaluate against a dataset in LangSmith
+# experiment_results = evaluate(
+#     predict,
+#     data="rag-faq-dataset",
+#     evaluators=[], # list of evaluator functions
+#     experiment_prefix="prompt-v3-tuning"
+# )</pre></div>
+  <button class="code-explain-toggle" aria-expanded="false">↳ Show explanation</button>
+  <div class="code-explanation">Programmatic evaluation runs the target function against all inputs in your dataset, logs the predictions, scores them with your evaluators, and groups them as a new experiment run under the target dataset in LangSmith.</div>
+</div>
+
+<div class="callout callout-remember">
+  <div class="callout-title">📌 LangSmith — Points to Remember</div>
+  <ul>
+    <li>Tracing is <strong>enabled automatically</strong> via <code>LANGCHAIN_TRACING_V2=true</code> in `.env` without code changes.</li>
+    <li>Use <code>LANGCHAIN_PROJECT</code> to group traces by environment (e.g. dev, staging, prod).</li>
+    <li>Use the <code>@traceable</code> decorator to trace standard Python utilities that aren't native Runnables.</li>
+    <li>Add tags and metadata dynamically in LCEL/LangGraph by passing a <code>RunnableConfig</code> dict into <code>.invoke()</code> or <code>.stream()</code>.</li>
+    <li><strong>Datasets</strong> in LangSmith can be populated directly from production traces that users flagged as bad, closing the feedback loop.</li>
+  </ul>
+</div>
+
+</div></div>
+
 <!-- ===================== IMPORTANT IMPORTS ===================== -->
 <div class="section" id="imports">
 <div class="section-header" onclick="this.parentElement.classList.toggle('open')" style="border-left-color:var(--teal)" aria-expanded="false">
