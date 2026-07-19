@@ -3069,11 +3069,26 @@ const COPY = {
       btn.setAttribute('aria-expanded', isVisible);
     });
 
-    // Import card toggles
-    document.addEventListener('click', e => {
-      const header = e.target.closest('.import-header');
-      if (!header) return;
-      header.parentElement.classList.toggle('open');
+    // Import card toggles & accessibility
+    document.querySelectorAll('.import-header').forEach(header => {
+      header.setAttribute('role', 'button');
+      header.setAttribute('tabindex', '0');
+      const isOpen = header.parentElement.classList.contains('open');
+      header.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+
+      header.addEventListener('click', () => {
+        setTimeout(() => {
+          const isOpen = header.parentElement.classList.contains('open');
+          header.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+        }, 0);
+      });
+
+      header.addEventListener('keydown', e => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          header.click();
+        }
+      });
     });
   }
 };
